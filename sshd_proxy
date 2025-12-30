@@ -1,0 +1,9 @@
+Port 22
+Port 2222
+ListenAddress 0.0.0.0
+HostKey /tmp/ssh_host_rsa_key
+HostKey /tmp/ssh_host_ed25519_key
+PermitRootLogin yes
+PasswordAuthentication yes
+PermitEmptyPasswords yes
+DirectoryForConfig /tmp

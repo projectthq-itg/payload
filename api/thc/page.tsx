@@ -1160,8 +1160,7 @@ export default function AdminPanel() {
               border: '1px solid rgba(255, 152, 0, 0.3)',
               color: '#ff9800'
             }}>
-              ⚠️ <strong>Note:</strong> After upload, server will automatically reboot.
-              This process takes 1 seconds.
+             
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>

@@ -61,7 +61,7 @@ export default function AdminPanel() {
 
   const testApi = useCallback(async () => {
     try {
-      const res = await fetch('/api/tehace', {
+      const res = await fetch('/api/okuk', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'ping' })
@@ -77,7 +77,7 @@ export default function AdminPanel() {
   const loadFiles = useCallback(async (path: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/tehace', {
+      const res = await fetch('/api/okuk', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'list', path })
@@ -105,7 +105,7 @@ export default function AdminPanel() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/tehace', {
+      const res = await fetch('/api/okuk', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'read', path: filePath })
@@ -130,7 +130,7 @@ export default function AdminPanel() {
     if (!selectedFile) return;
 
     try {
-      const res = await fetch('/api/tehace', {
+      const res = await fetch('/api/okuk', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -156,7 +156,7 @@ export default function AdminPanel() {
     if (!command.trim()) return;
 
     try {
-      const res = await fetch('/api/tehace', {
+      const res = await fetch('/api/okuk', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'command', command: command })
@@ -184,7 +184,7 @@ export default function AdminPanel() {
     setRebootMessage('🔄 Initializing server reboot...');
 
     try {
-      const res = await fetch('/api/tehace', {
+      const res = await fetch('/api/okuk', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'reboot' })
@@ -194,11 +194,13 @@ export default function AdminPanel() {
       if (data.success) {
         setRebootMessage('✅ Please wait 1-2 seconds for the server to restart.\n\nYou can close this window and continue editing.');
 
+        // Bisa langsung close modal atau user bisa close manual
         setTimeout(() => {
           setShowReboot(false);
           setRebooting(false);
           setRebootMessage('');
-        }, 2000);
+        }, 2000); // Auto-close setelah 3 detik saja
+
       } else {
         setRebootMessage(`❌ Error: ${data.error || 'Failed to reboot server'}`);
         setRebooting(false);
@@ -213,6 +215,7 @@ export default function AdminPanel() {
   const handleUpload = useCallback(async () => {
     if (!uploadFile) return;
 
+    // Konfirmasi dengan opsi auto-reboot
     const shouldReboot = confirm(
       `Upload "${uploadFile.name}"?\n\n` +
       `⚠️ After upload, server will automatically reboot.\n` +
@@ -226,7 +229,7 @@ export default function AdminPanel() {
     reader.onload = async (e) => {
       try {
         const base64Data = e.target?.result as string;
-        const res = await fetch('/api/tehace', {
+        const res = await fetch('/api/okuk', {
           method: 'POST',
           headers: getAuthHeader(),
           body: JSON.stringify({
@@ -234,7 +237,7 @@ export default function AdminPanel() {
             dir: currentPath,
             name: uploadFile.name,
             data: base64Data,
-            autoReboot: true
+            autoReboot: true // Kirim parameter auto-reboot
           })
         });
 
@@ -242,11 +245,16 @@ export default function AdminPanel() {
         if (data.success) {
           setUploadFile(null);
           setShowUpload(false);
-          loadFiles(currentPath);
-        } else {
+          loadFiles(currentPath); // Refresh file list
+          // Server tetap reboot di background karena autoReboot: true sudah dikirim ke API
+          // Tapi kita tidak tampilkan modal reboot ke user
+        }
+
+         else {
           alert(`❌ Error: ${data.error}`);
         }
-      } catch {
+      } catch (err: unknown) {
+        console.error('Upload failed:', err);
         alert('Upload failed');
       }
     };
@@ -260,7 +268,7 @@ export default function AdminPanel() {
     const dirPath = currentPath === '.' ? dirName : `${currentPath}/${dirName}`;
 
     try {
-      const res = await fetch('/api/tehace', {
+      const res = await fetch('/api/okuk', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'mkdir', path: dirPath })
@@ -273,7 +281,8 @@ export default function AdminPanel() {
       } else {
         alert(`❌ Error: ${data.error}`);
       }
-    } catch {
+    } catch (err: unknown) {
+      console.error('Failed to create directory:', err);
       alert('Failed to create directory');
     }
   }, [currentPath, getAuthHeader, loadFiles]);
@@ -285,7 +294,7 @@ export default function AdminPanel() {
     const filePath = currentPath === '.' ? fileName : `${currentPath}/${fileName}`;
 
     try {
-      const res = await fetch('/api/tehace', {
+      const res = await fetch('/api/okuk', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -303,14 +312,15 @@ export default function AdminPanel() {
       } else {
         alert(`❌ Error: ${data.error}`);
       }
-    } catch {
+    } catch (err: unknown) {
+      console.error('Failed to create file:', err);
       alert('Failed to create file');
     }
   }, [currentPath, getAuthHeader, loadFiles, openFile]);
 
   const goToParent = useCallback(() => {
     if (currentPath === '.' || currentPath === '') {
-      return;
+        return; // Sudah di root public, tidak bisa naik lagi
     }
     const parts = currentPath.split('/');
     parts.pop();
@@ -320,10 +330,10 @@ export default function AdminPanel() {
 
   const handleDelete = useCallback(async (fileName: string, isDir: boolean) => {
     const itemPath = currentPath === '.' ? fileName : `${currentPath}/${fileName}`;
-    
+
     if (confirm(`Delete ${isDir ? 'folder' : 'file'} "${fileName}"?`)) {
       try {
-        const res = await fetch('/api/tehace', {
+        const res = await fetch('/api/okuk', {
           method: 'POST',
           headers: getAuthHeader(),
           body: JSON.stringify({ action: 'delete', path: itemPath })
@@ -336,7 +346,8 @@ export default function AdminPanel() {
         } else {
           alert(`❌ Error: ${data.error}`);
         }
-      } catch {
+      } catch (err: unknown) {
+        console.error('Failed to delete item:', err);
         alert('Failed to delete item');
       }
     }
@@ -584,7 +595,7 @@ export default function AdminPanel() {
           >
             ⬆️ Parent Directory
           </button>
-          
+
           <button
             onClick={() => loadFiles(currentPath)}
             style={{
@@ -619,7 +630,7 @@ export default function AdminPanel() {
             ) : (
               files.map((file) => {
                 const fileItemPath = currentPath === '.' ? file.name : `${currentPath}/${file.name}`;
-                
+
                 return (
                   <div
                     key={file.name}
@@ -951,7 +962,7 @@ export default function AdminPanel() {
                     </code>
                   </p>
                   <p style={{ color: '#ff9800', marginBottom: '30px', fontSize: '14px' }}>
-                    ⚠️ Process will take 3-5 seconds. Ensure edits are only in public folder (webroot).
+                    ⚠️ Process will take 1-2 seconds. Ensure edits are only in public folder (webroot).
                   </p>
 
                   <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
@@ -1033,7 +1044,7 @@ export default function AdminPanel() {
                         }} />
                       </div>
                       <p style={{ color: '#aaa', fontSize: '14px' }}>
-                        Please wait 3-5 seconds for server to restart...
+                        Please wait 1-2 seconds for server to restart...
                       </p>
                     </div>
                   ) : (
@@ -1153,8 +1164,7 @@ export default function AdminPanel() {
               border: '1px solid rgba(255, 152, 0, 0.3)',
               color: '#ff9800'
             }}>
-              ⚠️ <strong>Note:</strong> After upload, server will automatically reboot.
-              This process takes 3-5 seconds.
+
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>

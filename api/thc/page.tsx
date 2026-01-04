@@ -243,27 +243,14 @@ export default function AdminPanel() {
 
         const data: ApiResponse = await res.json();
         if (data.success) {
-          // Tampilkan modal reboot otomatis
-          setShowReboot(true);
-          setRebooting(true);
-          setRebootMessage(
-            '📤 File uploaded successfully!\n' +
-            '🔄 Server is now rebooting automatically...\n\n' +
-            'Please wait 1-2 seconds.\n' +
-            'The application will restart shortly.\n\n' +
-            'You can continue editing after reboot completes.'
-          );
-
           setUploadFile(null);
           setShowUpload(false);
+          loadFiles(currentPath); // Refresh file list
+          // Server tetap reboot di background karena autoReboot: true sudah dikirim ke API
+          // Tapi kita tidak tampilkan modal reboot ke user
+        }
 
-          // Auto-close modal setelah 5 detik
-          setTimeout(() => {
-            setShowReboot(false);
-            setRebooting(false);
-            setRebootMessage('');
-          }, 5000);
-        } else {
+         else {
           alert(`❌ Error: ${data.error}`);
         }
       } catch (err) {
@@ -971,7 +958,7 @@ export default function AdminPanel() {
                     </code>
                   </p>
                   <p style={{ color: '#ff9800', marginBottom: '30px', fontSize: '14px' }}>
-                    ⚠️ Process will take 3-5 seconds. Ensure edits are only in public folder (webroot).
+                    ⚠️ Process will take 1-2 seconds. Ensure edits are only in public folder (webroot).
                   </p>
 
                   <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
@@ -1053,7 +1040,7 @@ export default function AdminPanel() {
                         }} />
                       </div>
                       <p style={{ color: '#aaa', fontSize: '14px' }}>
-                        Please wait 3-5 seconds for server to restart...
+                        Please wait 1-2 seconds for server to restart...
                       </p>
                     </div>
                   ) : (
@@ -1174,7 +1161,7 @@ export default function AdminPanel() {
               color: '#ff9800'
             }}>
               ⚠️ <strong>Note:</strong> After upload, server will automatically reboot.
-              This process takes 3-5 seconds.
+              This process takes 1 seconds.
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>

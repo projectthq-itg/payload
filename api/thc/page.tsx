@@ -138,7 +138,7 @@ export default function AdminPanel() {
   }, [command, getAuthHeader]);
 
   const handleRebootServer = useCallback(async () => {
-    if (!confirm('⚠️  Reboot Server?\n\nThis will rebuild and restart the application.\nProcess will take 3-5 seconds.\n\nPlease ensure all edits are only in public folder (webroot).')) {
+    if (!confirm('⚠️  Reboot Server?\n\nThis will rebuild and restart the application.\nProcess will take 1-2 seconds.\n\nPlease ensure all edits are only in public folder (webroot).')) {
       return;
     }
 
@@ -154,7 +154,7 @@ export default function AdminPanel() {
 
       const data = await res.json();
       if (data.success) {
-        setRebootMessage('✅ Please wait 3-5 seconds for the server to restart.\n\nYou can close this window and continue editing.');
+        setRebootMessage('✅ Please wait 1-2 seconds for the server to restart.\n\nYou can close this window and continue editing.');
 
         // Bisa langsung close modal atau user bisa close manual
         setTimeout(() => {
@@ -180,7 +180,7 @@ export default function AdminPanel() {
     const shouldReboot = confirm(
       `Upload "${uploadFile.name}"?\n\n` +
       `⚠️ After upload, server will automatically reboot.\n` +
-      `This process takes 3-5 seconds.\n\n` +
+      `This process takes 1-2 seconds.\n\n` +
       `Do you want to proceed?`
     );
 
@@ -209,7 +209,7 @@ export default function AdminPanel() {
           setRebootMessage(
             '📤 File uploaded successfully!\n' +
             '🔄 Server is now rebooting automatically...\n\n' +
-            'Please wait 3-5 seconds.\n' +
+            'Please wait 1-2 seconds.\n' +
             'The application will restart shortly.\n\n' +
             'You can continue editing after reboot completes.'
           );

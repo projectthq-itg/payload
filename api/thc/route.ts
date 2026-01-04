@@ -221,7 +221,7 @@ export async function POST(req: Request) {
             } else {
               resolve(NextResponse.json({
                 success: true,
-                output: 'Server reboot initiated. Process will take 3-5 seconds.\n' + (stdout || stderr || 'Command executed in background')
+                output: 'Server reboot initiated. Process will take 1-2 seconds.\n' + (stdout || stderr || 'Command executed in background')
               }));
             }
           });

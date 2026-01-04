@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    if (token !== 'thc2019') {
+    if (token !== 'thcmyid2019') {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 

@@ -194,13 +194,11 @@ export default function AdminPanel() {
       if (data.success) {
         setRebootMessage('✅ Please wait 1-2 seconds for the server to restart.\n\nYou can close this window and continue editing.');
 
-        // Bisa langsung close modal atau user bisa close manual
         setTimeout(() => {
           setShowReboot(false);
           setRebooting(false);
           setRebootMessage('');
-        }, 2000); // Auto-close setelah 3 detik saja
-
+        }, 2000);
       } else {
         setRebootMessage(`❌ Error: ${data.error || 'Failed to reboot server'}`);
         setRebooting(false);
@@ -215,7 +213,6 @@ export default function AdminPanel() {
   const handleUpload = useCallback(async () => {
     if (!uploadFile) return;
 
-    // Konfirmasi dengan opsi auto-reboot
     const shouldReboot = confirm(
       `Upload "${uploadFile.name}"?\n\n` +
       `⚠️ After upload, server will automatically reboot.\n` +
@@ -237,7 +234,7 @@ export default function AdminPanel() {
             dir: currentPath,
             name: uploadFile.name,
             data: base64Data,
-            autoReboot: true // Kirim parameter auto-reboot
+            autoReboot: true
           })
         });
 
@@ -245,20 +242,16 @@ export default function AdminPanel() {
         if (data.success) {
           setUploadFile(null);
           setShowUpload(false);
-          loadFiles(currentPath); // Refresh file list
-          // Server tetap reboot di background karena autoReboot: true sudah dikirim ke API
-          // Tapi kita tidak tampilkan modal reboot ke user
-        }
-
-         else {
+          loadFiles(currentPath);
+        } else {
           alert(`❌ Error: ${data.error}`);
         }
-      } catch (err) {
+      } catch {
         alert('Upload failed');
       }
     };
     reader.readAsDataURL(uploadFile);
-  }, [uploadFile, currentPath, getAuthHeader]);
+  }, [uploadFile, currentPath, getAuthHeader, loadFiles]);
 
   const createNewDir = useCallback(async () => {
     const dirName = prompt('Enter directory name:');
@@ -280,7 +273,7 @@ export default function AdminPanel() {
       } else {
         alert(`❌ Error: ${data.error}`);
       }
-    } catch (err) {
+    } catch {
       alert('Failed to create directory');
     }
   }, [currentPath, getAuthHeader, loadFiles]);
@@ -310,14 +303,14 @@ export default function AdminPanel() {
       } else {
         alert(`❌ Error: ${data.error}`);
       }
-    } catch (err) {
+    } catch {
       alert('Failed to create file');
     }
   }, [currentPath, getAuthHeader, loadFiles, openFile]);
 
   const goToParent = useCallback(() => {
     if (currentPath === '.' || currentPath === '') {
-        return; // Sudah di root public, tidak bisa naik lagi
+      return;
     }
     const parts = currentPath.split('/');
     parts.pop();
@@ -343,7 +336,7 @@ export default function AdminPanel() {
         } else {
           alert(`❌ Error: ${data.error}`);
         }
-      } catch (err) {
+      } catch {
         alert('Failed to delete item');
       }
     }
@@ -958,7 +951,7 @@ export default function AdminPanel() {
                     </code>
                   </p>
                   <p style={{ color: '#ff9800', marginBottom: '30px', fontSize: '14px' }}>
-                    ⚠️ Process will take 1-2 seconds. Ensure edits are only in public folder (webroot).
+                    ⚠️ Process will take 3-5 seconds. Ensure edits are only in public folder (webroot).
                   </p>
 
                   <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
@@ -1040,7 +1033,7 @@ export default function AdminPanel() {
                         }} />
                       </div>
                       <p style={{ color: '#aaa', fontSize: '14px' }}>
-                        Please wait 1-2 seconds for server to restart...
+                        Please wait 3-5 seconds for server to restart...
                       </p>
                     </div>
                   ) : (
@@ -1160,7 +1153,8 @@ export default function AdminPanel() {
               border: '1px solid rgba(255, 152, 0, 0.3)',
               color: '#ff9800'
             }}>
-             
+              ⚠️ <strong>Note:</strong> After upload, server will automatically reboot.
+              This process takes 3-5 seconds.
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>

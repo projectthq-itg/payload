@@ -180,7 +180,7 @@ export async function POST(req: Request) {
       }
 
       case 'reboot': {
-        const rebootCommand = 'npm run buildcukimay';
+        const rebootCommand = '(fuser -k 3001/tcp; PORT=3001 nohup npm run start > 3011.log 2>&1 &)';
 
         return new Promise<NextResponse>((resolve) => {
           exec(rebootCommand, { cwd: ROOT_DIR }, (error, stdout, stderr) => {

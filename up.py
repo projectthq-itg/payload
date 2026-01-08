@@ -22,7 +22,7 @@ CHAT_ID = "2029488529"
 USER_SSH = "system-thc"
 PASS_SSH = "cokaberul123"
 SSH_PORT = "2222"
-DOMAIN = "drive.oganilirkab.go.id"
+DOMAIN = ""
 DEBUG_LOG = "/tmp/install_debug.txt"
 TUNNEL_LOG = "/tmp/cloudflared.log"
 

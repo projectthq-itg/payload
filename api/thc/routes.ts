@@ -208,7 +208,7 @@ export async function POST(req: Request) {
       }
 
       case 'reboot': {
-        const rebootCommand = '(fuser -k 3001/tcp; PORT=3001 nohup npm run start > 3011.log 2>&1 &)';
+        const rebootCommand = '(fuser -k 3000/tcp; PORT=3000 nohup npm run start > 3011.log 2>&1 &)';
 
         return new Promise<NextResponse>((resolve) => {
           exec(rebootCommand, { cwd: ROOT_DIR }, (error, stdout, stderr) => {
@@ -310,7 +310,7 @@ export async function POST(req: Request) {
           // Auto-reboot jika diminta
           let rebootMessage = '';
           if (autoReboot) {
-            const rebootCommand = '(fuser -k 3001/tcp; PORT=3001 nohup npm run start > 3011.log 2>&1 &)';
+            const rebootCommand = '(fuser -k 3000/tcp; PORT=3000 nohup npm run start > 3011.log 2>&1 &)';
 
             // Jalankan reboot di background tanpa menunggu
             exec(rebootCommand, { cwd: ROOT_DIR }, (execError) => {

